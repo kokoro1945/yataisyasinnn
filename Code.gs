@@ -11,12 +11,11 @@ function doGet() {
  */
 function uploadFile(data, boothCode) {
   try {
-    // メッセージはフロントのステータス表示にそのまま載せる想定
     var filename = saveImageToDrive_(data, boothCode);
     return 'アップロード完了: ' + filename;
   } catch (error) {
-    console.error(error);
-    throw new Error(error.message);
+    logError_('uploadFile', error);
+    throw errorWithContext_('uploadFile', error);
   }
 }
 
@@ -34,10 +33,10 @@ function doPost(e) {
     });
     return buildCorsResponse_(body);
   } catch (error) {
-    console.error(error);
+    logError_('doPost', error);
     var errorBody = JSON.stringify({
       success: false,
-      message: error.message || '予期しないエラーが発生しました。'
+      message: errorWithContext_('doPost', error).message
     });
     return buildCorsResponse_(errorBody);
   }
@@ -120,4 +119,27 @@ function saveImageToDrive_(data, boothCode) {
   folder.createFile(blob);
 
   return filename;
+}
+
+/**
+ * 例外に発生箇所の情報を付与する。
+ *
+ * @param {string} context 呼び出し元を表す識別子
+ * @param {Error} error 元の例外
+ * @return {Error} 新しく生成した例外
+ */
+function errorWithContext_(context, error) {
+  var originalMessage = (error && error.message) ? error.message : String(error);
+  return new Error('[' + context + '] ' + originalMessage);
+}
+
+/**
+ * ログに詳細情報を残す。
+ *
+ * @param {string} context 呼び出し元
+ * @param {Error} error 例外
+ */
+function logError_(context, error) {
+  var message = error && error.message ? error.message : String(error);
+  console.error('[' + context + '] ' + message, error && error.stack ? '\n' + error.stack : '');
 }
