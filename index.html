@@ -1,187 +1,269 @@
 <!DOCTYPE html>
 <html lang="ja">
   <head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>写真アップローダー</title>
+    <title>屋台部 写真アップローダー</title>
     <style>
-  /* ==========================
-     🌸 ページ全体の設定
-     ========================== */
-  body {
-    font-family: "Noto Sans JP", sans-serif; /* ← 全体のフォント（ここを変えると全体が変わる） */
-    background: #eef3f7;  /* ページ全体の背景色 */
-    color: #333;          /* 全体の文字色 */
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;    /* 高さを画面全体に合わせる */
-    font-size: 35px;      /* ← ★全体の基本フォントサイズ（ここを大きくすると全体が比例して拡大） */
-  }
+      :root {
+        --primary: #0083b0;
+        --primary-light: #00b4db;
+        --bg: #eef3f7;
+        --text: #333;
+      }
 
-  /* ==========================
-     🟦 ヘッダー（上部タイトルバー）
-     ========================== */
-  header {
-    width: 100%;                  /* 画面幅いっぱいに広げる */
-    background: linear-gradient(135deg, #00b4db, #0083b0); /* グラデーション */
-    color: white;                 /* 文字色 */
-    text-align: center;           /* 中央揃え */
-    padding: 1.2rem;              /* ← 上下の余白（rem単位：フォントサイズ基準） */
-    font-size: 2rem;              /* ← ★タイトル文字の大きさ（大きくしたいならここ） */
-    font-weight: 700;             /* 太字 */
-    letter-spacing: 0.05em;       /* 文字間隔少し広め */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* 影 */
-  }
+      * {
+        box-sizing: border-box;
+      }
 
-  /* ==========================
-     🟩 メインカード（中央の白い部分）
-     ========================== */
-  main {
-    flex: 1;
-    width: 98%;                   /* ← 画面幅の何％を使うか（狭いと思ったら98%とかに） */
-    max-width: 650px;             /* ← 最大幅（タブレットで広がりすぎ防止） */
-    background: white;
-    border-radius: 20px;          /* ← カードの角丸半径（数字を大きく→丸み強く） */
-    margin-top: 1rem;             /* ← ヘッダーとの間の余白 */
-    padding: 2rem 1.5rem;         /* ← 内側余白（上下・左右） */
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); /* カード影 */
-    text-align: center;
-  }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
 
-  /* ==========================
-     🟨 セレクトボックス（列・番号）
-     ========================== */
-  select {
-    width: 90%;                   /* ← 横幅（画面全体に広げたい場合は 90% などに） */
-    font-size: 1.3rem;            /* ← ★プルダウン内文字の大きさ */
-    padding: 12px;                /* ← 内側の余白（上下・左右） */
-    margin: 0.8rem;               /* ← 要素間の間隔 */
-    border: 2px solid #ccc;       /* 枠線 */
-    border-radius: 8px;           /* 角の丸み */
-    background: #f8f8f8;
-  }
+      header {
+        width: 100%;
+        padding: 16px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      }
 
-  /* ==========================
-     📷 撮影ボタン
-     ========================== */
-  #cameraInput {
-    display: none; /* input自体は隠してlabelをボタン代わりに使う */
-  }
+      main {
+        width: min(640px, 92%);
+        margin: 24px auto;
+        padding: 24px 20px 32px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
 
-  label.camera-button {
-    display: inline-block;
-    background: #0083b0;          /* ← ボタンの背景色 */
-    color: white;                 /* ボタン文字の色 */
-    font-size: 1.6rem;            /* ← ★ボタンの文字サイズ（大きくしたいならここ） */
-    padding: 1rem 3rem;           /* ← ボタンの高さ・幅を決める（上下・左右） */
-    margin-top: 1.8rem;           /* ボタン上の余白 */
-    border-radius: 50px;          /* ← 丸みの強さ（大きいほど丸） */
-    cursor: pointer;              /* クリックカーソル */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); /* 影 */
-    transition: background 0.3s, transform 0.1s;
-  }
+      .selector {
+        display: grid;
+        gap: 12px;
+      }
 
-  label.camera-button:hover {
-    background: #00b4db;          /* ← ホバー（押した時）の色 */
-    transform: scale(1.05);       /* ← 押した時に少し拡大（演出） */
-  }
+      label {
+        font-size: 1rem;
+        text-align: left;
+      }
 
-  /* ==========================
-     💬 ステータス表示（アップロード中・完了など）
-     ========================== */
-  #status {
-    margin-top: 1.5rem;
-    font-size: 1.2rem;            /* ← ★アップロード完了の文字サイズ */
-    line-height: 1.6;             /* 行間（見やすくする） */
-    word-wrap: break-word;        /* 長い文字列を折り返す */
-  }
+      select {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.2rem;
+        border: 2px solid #d5dbe3;
+        border-radius: 10px;
+        background: #f8fafc;
+        transition: border 0.2s ease;
+      }
 
-  /* 点滅アニメーション */
-  .loading {
-    animation: blink 1s infinite;
-  }
+      select:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 4px rgba(0, 131, 176, 0.15);
+      }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
+      #boothDisplay {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-top: 4px;
+      }
 
-  /* ==========================
-     🟫 フッター
-     ========================== */
-  footer {
-    margin-top: auto;
-    font-size: 1rem;              /* ← フッター文字サイズ */
-    color: #777;
-    padding: 1rem 0;
-  }
-</style>
+      #cameraInput {
+        display: none;
+      }
 
+      label.camera-button {
+        display: inline-block;
+        padding: 16px 40px;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #fff;
+        background: var(--primary);
+        border-radius: 999px;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(0, 131, 176, 0.25);
+        transition: transform 0.15s ease, background 0.2s ease;
+        align-self: center;
+      }
+
+      label.camera-button:hover {
+        background: var(--primary-light);
+        transform: translateY(-1px);
+      }
+
+      label.camera-button:active {
+        transform: translateY(0);
+      }
+
+      label.camera-button.disabled {
+        background: #97a4b1;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+      }
+
+      #status {
+        min-height: 1.5em;
+        font-size: 1rem;
+        line-height: 1.6;
+        word-break: break-word;
+      }
+
+      #status.loading::after {
+        content: "…";
+        animation: blink 1s infinite steps(1, end);
+      }
+
+      @keyframes blink {
+        0%, 100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.2;
+        }
+      }
+
+      footer {
+        margin-top: auto;
+        padding: 20px 0 24px;
+        font-size: 0.9rem;
+        color: #6c7a89;
+      }
+    </style>
   </head>
-
   <body>
-    <header>📸 写真アップローダー</header>
-
+    <header>屋台部 写真アップローダー</header>
     <main>
-      <div>
-        <label>列：</label>
-        <select id="column">
+      <section class="selector">
+        <label for="area">エリア</label>
+        <select id="area">
           <option value="A">A</option>
           <option value="B">B</option>
           <option value="C">C</option>
+          <option value="D">D</option>
+          <option value="E">E</option>
+          <option value="F">F</option>
+          <option value="G">G</option>
+          <option value="H">H</option>
+          <option value="I">I</option>
+          <option value="J">J</option>
         </select>
 
-        <label>番号：</label>
+        <label for="number">番号</label>
         <select id="number">
           <option value="1">1</option>
           <option value="2">2</option>
           <option value="3">3</option>
           <option value="4">4</option>
           <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
         </select>
-      </div>
 
-      <input type="file" accept="image/*" capture="camera" id="cameraInput">
-      <label for="cameraInput" class="camera-button">📷 撮影する</label>
+        <p id="boothDisplay">選択中の屋台: A01</p>
+      </section>
 
-      <p id="status"></p>
+      <input type="file" id="cameraInput" accept="image/*" capture="environment">
+      <label class="camera-button" for="cameraInput" id="cameraTrigger">📷 撮影する</label>
+
+      <p id="status" aria-live="polite"></p>
     </main>
-
     <footer>© 2025 屋台部 Photo Upload System</footer>
 
     <script>
-      const input = document.getElementById('cameraInput');
+      const areaSelect = document.getElementById('area');
+      const numberSelect = document.getElementById('number');
+      const boothDisplay = document.getElementById('boothDisplay');
+      const cameraInput = document.getElementById('cameraInput');
+      const cameraTrigger = document.getElementById('cameraTrigger');
       const status = document.getElementById('status');
 
-      input.addEventListener('change', () => {
-        const file = input.files[0];
-        if (!file) return;
+      const padNumber = (value) => value.toString().padStart(2, '0');
 
-        const column = document.getElementById('column').value;
-        const number = document.getElementById('number').value;
+      const getBoothCode = () => {
+        const area = areaSelect.value;
+        const number = padNumber(numberSelect.value);
+        return area + number;
+      };
+
+      const updateDisplay = () => {
+        boothDisplay.textContent = '選択中の屋台: ' + getBoothCode();
+      };
+
+      const setUploadingState = (isUploading) => {
+        areaSelect.disabled = isUploading;
+        numberSelect.disabled = isUploading;
+        cameraInput.disabled = isUploading;
+        cameraTrigger.classList.toggle('disabled', isUploading);
+        if (isUploading) {
+          cameraTrigger.setAttribute('aria-disabled', 'true');
+        } else {
+          cameraTrigger.removeAttribute('aria-disabled');
+        }
+      };
+
+      areaSelect.addEventListener('change', updateDisplay);
+      numberSelect.addEventListener('change', updateDisplay);
+
+      cameraInput.addEventListener('change', () => {
+        const file = cameraInput.files[0];
+        if (!file) {
+          return;
+        }
+
+        const boothCode = getBoothCode();
+        if (!boothCode) {
+          status.textContent = '屋台番号を選択してください。';
+          cameraInput.value = '';
+          return;
+        }
+
+        setUploadingState(true);
+        status.textContent = 'アップロード中';
+        status.classList.add('loading');
 
         const reader = new FileReader();
-
         reader.onloadend = () => {
-          status.innerText = '📤 アップロード中...';
-          status.classList.add('loading');
-
           google.script.run
-            .withSuccessHandler(msg => {
-              status.innerHTML = `✅ <b>アップロード完了:</b><br>${msg}`;
+            .withSuccessHandler((message) => {
               status.classList.remove('loading');
+              status.textContent = message;
+              setUploadingState(false);
+              cameraInput.value = '';
             })
-            .withFailureHandler(err => {
-              status.innerText = '❌ エラー: ' + JSON.stringify(err);
+            .withFailureHandler((error) => {
               status.classList.remove('loading');
+              status.textContent = 'エラーが発生しました: ' + (error && error.message ? error.message : JSON.stringify(error));
+              setUploadingState(false);
+              cameraInput.value = '';
             })
-            .uploadFile(reader.result, column, number);
+            .uploadFile(reader.result, boothCode);
         };
 
         reader.readAsDataURL(file);
       });
+
+      updateDisplay();
     </script>
   </body>
 </html>
