@@ -191,6 +191,8 @@
     <footer>© 2025 屋台部 Photo Upload System</footer>
 
     <script>
+      // 公開中の Web アプリ URL（ローカル表示時のフォールバック用）
+      const GAS_URL = 'https://script.google.com/macros/s/AKfycbwGzPQlKZJWt0s3j8U-eC4b9Yck1KJf91Sa9pXGwE1c1viRnx4emVMSuZU7Q1nc7TJZ4A/exec';
       const areaSelect = document.getElementById('area');
       const numberSelect = document.getElementById('number');
       const boothDisplay = document.getElementById('boothDisplay');
@@ -198,6 +200,7 @@
       const cameraTrigger = document.getElementById('cameraTrigger');
       const status = document.getElementById('status');
 
+      // 屋台番号の下2桁をゼロ埋めする
       const padNumber = (value) => value.toString().padStart(2, '0');
 
       const getBoothCode = () => {
@@ -225,6 +228,42 @@
       areaSelect.addEventListener('change', updateDisplay);
       numberSelect.addEventListener('change', updateDisplay);
 
+      // GAS 埋め込み内かどうか判定する
+      const inGasContext = () => typeof google !== 'undefined' && google.script && google.script.run;
+
+      const performUpload = (dataUrl, boothCode) => {
+        if (inGasContext()) {
+          // GAS 内で動作している場合は google.script.run を利用
+          return new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler((error) => {
+                reject(error && error.message ? error.message : JSON.stringify(error));
+              })
+              .uploadFile(dataUrl, boothCode);
+          });
+        }
+
+        // ローカルやプレビュー時は Web アプリ URL へ fetch する
+        return fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ data: dataUrl, boothCode })
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('サーバーへの接続に失敗しました。');
+            }
+            return response.json();
+          })
+          .then((result) => {
+            if (result && result.success) {
+              return result.message;
+            }
+            throw new Error(result && result.message ? result.message : 'アップロードに失敗しました。');
+          });
+      };
+
       cameraInput.addEventListener('change', () => {
         const file = cameraInput.files[0];
         if (!file) {
@@ -244,20 +283,20 @@
 
         const reader = new FileReader();
         reader.onloadend = () => {
-          google.script.run
-            .withSuccessHandler((message) => {
+          performUpload(reader.result, boothCode)
+            .then((message) => {
               status.classList.remove('loading');
-              status.textContent = message;
+              status.textContent = message || 'アップロードが完了しました。';
+            })
+            .catch((error) => {
+              status.classList.remove('loading');
+              const message = typeof error === 'string' ? error : (error && error.message ? error.message : 'アップロードに失敗しました。');
+              status.textContent = 'エラーが発生しました: ' + message;
+            })
+            .finally(() => {
               setUploadingState(false);
               cameraInput.value = '';
-            })
-            .withFailureHandler((error) => {
-              status.classList.remove('loading');
-              status.textContent = 'エラーが発生しました: ' + (error && error.message ? error.message : JSON.stringify(error));
-              setUploadingState(false);
-              cameraInput.value = '';
-            })
-            .uploadFile(reader.result, boothCode);
+            });
         };
 
         reader.readAsDataURL(file);
