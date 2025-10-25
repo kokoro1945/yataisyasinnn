@@ -247,7 +247,8 @@
         // ローカルやプレビュー時は Web アプリ URL へ fetch する
         return fetch(GAS_URL, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: dataUrl, boothCode })
         })
           .then((response) => {
@@ -304,9 +305,13 @@
               const rawMessage = typeof error === 'string' ? error : (error && error.message ? error.message : 'アップロードに失敗しました。');
               const isNetworkError = /load failed/i.test(rawMessage) || rawMessage === 'TypeError: Failed to fetch';
               const friendlyMessage = isNetworkError
-                ? 'GAS への通信に失敗しました。電波状況を確認するか、直接こちらの URL を開いてご利用ください。\n' + GAS_URL
+                ? 'GAS への通信に失敗しました。電波状況を確認するか、<a href="' + GAS_URL + '" target="_blank" rel="noopener">こちらの URL</a> を開いてご利用ください。'
                 : rawMessage;
-              status.textContent = 'エラーが発生しました: ' + friendlyMessage;
+              if (isNetworkError) {
+                status.innerHTML = 'エラーが発生しました: ' + friendlyMessage;
+              } else {
+                status.textContent = 'エラーが発生しました: ' + rawMessage;
+              }
             })
             .finally(() => {
               setUploadingState(false);

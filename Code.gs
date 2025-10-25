@@ -32,15 +32,35 @@ function doPost(e) {
       success: true,
       message: 'アップロード完了: ' + filename
     });
-    return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
+    return buildCorsResponse_(body);
   } catch (error) {
     console.error(error);
     var errorBody = JSON.stringify({
       success: false,
       message: error.message || '予期しないエラーが発生しました。'
     });
-    return ContentService.createTextOutput(errorBody).setMimeType(ContentService.MimeType.JSON);
+    return buildCorsResponse_(errorBody);
   }
+}
+
+/**
+ * OPTIONS リクエスト（CORS プリフライト）への応答。
+ */
+function doOptions() {
+  return buildCorsResponse_('');
+}
+
+/**
+ * 共通で CORS ヘッダーを付与したレスポンスを生成する。
+ *
+ * @param {string} content JSON 文字列
+ */
+function buildCorsResponse_(content) {
+  return ContentService.createTextOutput(content)
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 /**
