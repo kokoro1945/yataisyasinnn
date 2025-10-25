@@ -282,7 +282,18 @@
         status.classList.add('loading');
 
         const reader = new FileReader();
+
+        reader.onerror = () => {
+          status.classList.remove('loading');
+          status.textContent = '画像の読み込みに失敗しました。もう一度撮影してください。';
+          setUploadingState(false);
+          cameraInput.value = '';
+        };
+
         reader.onloadend = () => {
+          if (reader.error || !reader.result) {
+            return;
+          }
           performUpload(reader.result, boothCode)
             .then((message) => {
               status.classList.remove('loading');
@@ -290,8 +301,12 @@
             })
             .catch((error) => {
               status.classList.remove('loading');
-              const message = typeof error === 'string' ? error : (error && error.message ? error.message : 'アップロードに失敗しました。');
-              status.textContent = 'エラーが発生しました: ' + message;
+              const rawMessage = typeof error === 'string' ? error : (error && error.message ? error.message : 'アップロードに失敗しました。');
+              const isNetworkError = /load failed/i.test(rawMessage) || rawMessage === 'TypeError: Failed to fetch';
+              const friendlyMessage = isNetworkError
+                ? 'GAS への通信に失敗しました。電波状況を確認するか、直接こちらの URL を開いてご利用ください。\n' + GAS_URL
+                : rawMessage;
+              status.textContent = 'エラーが発生しました: ' + friendlyMessage;
             })
             .finally(() => {
               setUploadingState(false);
